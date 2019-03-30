@@ -1,24 +1,59 @@
-# README
+### Fun with Mutators Pattern.
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Don't use before_* callbacks in rails magic, instead use mutators patterns.
 
-Things you may want to cover:
+#### Before
+```rb
+class User < ApplicationRecord
+  before_destroy :increase_grades_of_highest_users
 
-* Ruby version
+  scope :highest_grade_users, ->(user) { where('grade > ?', user.grade) }
 
-* System dependencies
+  def grade_decrease!
+    self.grade -= 1
+    save!
+  end
 
-* Configuration
+  private
 
-* Database creation
+  def increase_grades_of_highest_users
+    User.highest_grade_users(self).each(&:grade_decrease!)
+  end
+end
 
-* Database initialization
+class UsersController
+  def destroy
+    # ..
+    @user.destroy!
+    # ..
+  end
+end
+```
 
-* How to run the test suite
+#### After
+```rb
+class User < ApplicationRecord
+  scope :highest_grade_users, ->(user) { where('grade > ?', user.grade) }
 
-* Services (job queues, cache servers, search engines, etc.)
+  def grade_decrease!
+    self.grade -= 1
+    save!
+  end
+end
 
-* Deployment instructions
+class UserMutator
+  def self.destroy!(user)
+    highest_grade_users = User.highest_grade_users(user)
+    highest_grade_users.each(&:grade_decrease!)
+    user.destroy!
+  end
+end
 
-* ...
+class UsersController
+  def destroy!
+    # ..
+    UserMutator.destroy!(@user)
+    # ..
+  end
+end
+```
