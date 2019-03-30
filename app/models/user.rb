@@ -1,5 +1,6 @@
 class User < ApplicationRecord
-  before_destroy :increase_grades_of_highest_users
+  # Move to mutators
+  # before_destroy :increase_grades_of_highest_users
 
   scope :highest_grade_users, ->(user) { where('grade > ?', user.grade) }
 
@@ -8,9 +9,10 @@ class User < ApplicationRecord
     save!
   end
 
-  private
+  # private
 
-  def increase_grades_of_highest_users
-    User.highest_grade_users(self).each(&:grade_decrease!)
-  end
+  # Move to mutators.
+  # def increase_grades_of_highest_users
+  #   User.highest_grade_users(self).each(&:grade_decrease!)
+  # end
 end
